@@ -15,40 +15,33 @@ import { Eye, EyeOff } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { loginSchema, type LoginFormData } from "@/lib/validations/auth"
-import { authService } from "@/services/auth.service"
-import { useMutation } from "@tanstack/react-query"
 import { showCustomToast } from "@/App"
+import { useDispatch, useSelector } from "react-redux"
+import { login } from "@/store/slices/authSlice"
+import { RootState, AppDispatch } from "@/store"
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
+  const dispatch = useDispatch<AppDispatch>()
+  const { loading, error } = useSelector((state: RootState) => state.auth)
 
   const {
-    register,
+    register: registerForm,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   })
 
-  const { mutate: loginUser, isPending } = useMutation({
-    mutationFn: authService.login,
-    onSuccess: (response) => {
-      if (response.token) {
-        localStorage.setItem("token", response.token)
-        showCustomToast("success", "Login successful!")
-        navigate("/home")
-      } else {
-        showCustomToast("error", "Login failed - no token received")
-      }
-    },
-    onError: (error: Error) => {
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      await dispatch(login(data.email, data.password))
+      showCustomToast("success", "Login successful!")
+      navigate("/home")
+    } catch (error: any) {
       showCustomToast("error", error.message)
-    },
-  })
-
-  const onSubmit = (data: LoginFormData) => {
-    loginUser(data)
+    }
   }
 
   return (
@@ -68,7 +61,7 @@ export function LoginForm() {
               type="email"
               placeholder="name@example.com"
               className="h-10"
-              {...register("email")}
+              {...registerForm("email")}
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -90,7 +83,7 @@ export function LoginForm() {
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 className="h-10 pr-10"
-                {...register("password")}
+                {...registerForm("password")}
               />
               <Button
                 type="button"
@@ -115,15 +108,17 @@ export function LoginForm() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button className="w-full h-10" type="submit" disabled={isPending}>
-            {isPending ? "Signing in..." : "Sign in"}
-          </Button>
-          <p className="text-sm text-center text-muted-foreground">
-            Don't have an account?{" "}
-            <Link to="/register" className="text-primary hover:underline">
-              Sign up
-            </Link>
-          </p>
+          <div className="space-y-4 w-full">
+            <Button className="w-full h-10" type="submit" disabled={loading}>
+              {loading ? "Signing in..." : "Sign in"}
+            </Button>
+            <p className="text-sm text-center text-muted-foreground">
+              Don't have an account?{" "}
+              <Link to="/register" className="text-primary hover:underline">
+                Sign up
+              </Link>
+            </p>
+          </div>
         </CardFooter>
       </form>
     </Card>

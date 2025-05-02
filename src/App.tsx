@@ -7,6 +7,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster, toast } from 'react-hot-toast'
 import { CheckCircle, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Provider } from 'react-redux'
+import { store } from './store'
 
 const queryClient = new QueryClient()
 
@@ -34,31 +36,33 @@ export function showCustomToast(type: "success" | "error", message: string) {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-        <Router>
-          <div className="min-h-screen bg-gradient-to-br from-background via-background/90 to-muted/80 relative">
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/home" element={<HomePage />} />
-              <Route path="/" element={<LoginPage />} />
-            </Routes>
-          </div>
-        </Router>
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            success: {
-              icon: '✅',
-            },
-            error: {
-              icon: '❌',
-            },
-          }}
-        />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <Provider store={store}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+          <Router>
+            <div className="min-h-screen bg-gradient-to-br from-background via-background/90 to-muted/80 relative">
+              <Routes>
+                <Route path="/" element={<LoginPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/home" element={<HomePage />} />
+              </Routes>
+            </div>
+          </Router>
+          <Toaster 
+            position="top-right"
+            toastOptions={{
+              success: {
+                icon: '✅',
+              },
+              error: {
+                icon: '❌',
+              },
+            }}
+          />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </Provider>
   )
 }
 

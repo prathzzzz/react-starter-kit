@@ -15,43 +15,33 @@ import { Eye, EyeOff } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { registerSchema, type RegisterFormData } from "@/lib/validations/auth"
-import { authService } from "@/services/auth.service"
-import { useMutation } from "@tanstack/react-query"
 import { showCustomToast } from "@/App"
+import { useDispatch, useSelector } from "react-redux"
+import { register } from "@/store/slices/authSlice"
+import { RootState, AppDispatch } from "@/store"
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
+  const dispatch = useDispatch<AppDispatch>()
+  const { loading, error } = useSelector((state: RootState) => state.auth)
 
   const {
-    register,
+    register: registerForm,
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
   })
 
-  const { mutate: registerUser, isPending } = useMutation({
-    mutationFn: authService.register,
-    onSuccess: (response) => {
-      console.log("Mutation success response:", response)
-      if (response.token) {
-        localStorage.setItem("token", response.token)
-        showCustomToast("success", "Registration successful!")
-        navigate("/home")
-      } else {
-        console.error("Registration failed - no token received:", response)
-        showCustomToast("error", "Registration failed - no token received")
-      }
-    },
-    onError: (error: Error) => {
-      console.error("Mutation error:", error)
+  const onSubmit = async (data: RegisterFormData) => {
+    try {
+      await dispatch(register(data.email, data.password))
+      showCustomToast("success", "Registration successful!")
+      navigate("/home")
+    } catch (error: any) {
       showCustomToast("error", error.message)
-    },
-  })
-
-  const onSubmit = (data: RegisterFormData) => {
-    registerUser(data)
+    }
   }
 
   return (
@@ -71,7 +61,7 @@ export function RegisterForm() {
               type="email"
               placeholder="name@example.com"
               className="h-10"
-              {...register("email")}
+              {...registerForm("email")}
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -85,7 +75,7 @@ export function RegisterForm() {
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 className="h-10 pr-10"
-                {...register("password")}
+                {...registerForm("password")}
               />
               <Button
                 type="button"
@@ -111,8 +101,8 @@ export function RegisterForm() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="space-y-4 w-full">
-            <Button className="w-full h-10" type="submit" disabled={isPending}>
-              {isPending ? "Creating account..." : "Create Account"}
+            <Button className="w-full h-10" type="submit" disabled={loading}>
+              {loading ? "Creating account..." : "Create Account"}
             </Button>
             <p className="text-sm text-center text-muted-foreground">
               Already have an account?{" "}
