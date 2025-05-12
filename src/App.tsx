@@ -9,6 +9,7 @@ import { CheckCircle, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Provider } from 'react-redux'
 import { store } from './store'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 
 const queryClient = new QueryClient()
 
@@ -45,7 +46,14 @@ function App() {
                 <Route path="/" element={<LoginPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
-                <Route path="/home" element={<HomePage />} />
+                <Route
+                  path="/home"
+                  element={
+                    <ProtectedRoute>
+                      <HomePage />
+                    </ProtectedRoute>
+                  }
+                />
               </Routes>
             </div>
           </Router>
